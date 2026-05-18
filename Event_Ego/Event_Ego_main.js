@@ -1,5 +1,5 @@
 // ==========================================
-// 파일명: Event_Ego_main.js (모달 및 필터 연동 완료)
+// 파일명: Event_Ego_main.js (모달, 필터 및 이미지 비율 보존 완수)
 // ==========================================
 
 import { IdentityManager } from '../simulator/IdentityManager.js';
@@ -138,10 +138,10 @@ function renderFilteredEgos() {
         return;
     }
 
-    // 필터링된 데이터를 바탕으로 카드 UI 생성
+    // 필터링된 데이터를 바탕으로 카드 UI 생성 (object-fit: contain 적용 완료)
     listDiv.innerHTML = `<div class="sinner-grid">` + filtered.map(ego => `
         <div class="sinner-icon ego-card" data-egoid="${ego.id}" style="width: 140px; height: 180px; padding: 5px; display: flex; flex-direction: column; align-items: center; border: 1px solid #555; background: #2a2421; border-radius: 8px; cursor: pointer;">
-            <img src="${ego.img}" style="width: 100%; height: 110px; object-fit: cover; border-radius: 4px; margin-bottom: 8px;" onerror="this.src='https://via.placeholder.com/140x110?text=No+Image'">
+            <img src="${ego.img}" style="width: 100%; height: 110px; object-fit: contain; border-radius: 4px; margin-bottom: 8px;" onerror="this.src='https://via.placeholder.com/140x110?text=No+Image'">
             <div style="font-size: 11px; color: #d4af37; margin-bottom: 2px;">[${ego.grade}]</div>
             <div style="font-size: 13px; font-weight: bold; text-align: center; line-height: 1.2;">${ego.name}</div>
         </div>
