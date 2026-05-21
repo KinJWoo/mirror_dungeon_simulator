@@ -1,7 +1,3 @@
-// ==========================================
-// 파일명: Event_Ego_main.js (모달, 필터 및 이미지 비율 보존 완수)
-// ==========================================
-
 import { IdentityManager } from '../simulator/IdentityManager.js';
 
 const manager = new IdentityManager();
@@ -26,16 +22,19 @@ async function init() {
         egoData = await egoRes.json();
 
         setupTabs();
+
+        // [문제 1 해결] 데이터 로드 완료 후 화면 렌더링 함수 호출
         renderSinnerIcons();
         setupFilters();
-        
-        // 3. 모달 닫기 이벤트 (메모리 최적화를 위해 1회만 등록)
-        document.getElementById('modal-close')?.addEventListener('click', () => {
+        renderFilteredEgos();
+
+        // [문제 2 해결] 모달창 닫기 이벤트 리스너 바인딩
+        document.getElementById('modal-close').addEventListener('click', () => {
             document.getElementById('ego-modal').classList.remove('active');
         });
-        
+
     } catch (error) {
-        console.error("데이터 로드 실패:", error);
+        console.error("초기화 중 오류 발생:", error);
     }
 }
 
