@@ -81,7 +81,11 @@ function openModal(data) {
                             <span class="skill-type">${s.type} / ${s.crime}</span>
                         </div>
                         <div class="skill-stats">
-                            기본 위력: ${s.default_power} | 코인 위력: ${s.coin_power} (코인: ${s.coin}개)
+                            기본 위력: ${s.default_power} | 코인 위력: ${s.coin_power} (`
+                        if (s.coin_type == "indestructible") {
+                            detailsHTML += "파괴 불가 "
+                        }
+                detailsHTML += `코인: ${s.coin}개)
                         </div>
                     </div>`;
             });
@@ -98,7 +102,13 @@ function openModal(data) {
                         <div class="skill-header">
                             <span>${g.name}</span><span class="skill-type">${g.type} / ${g.crime}</span>
                         </div>
-                        <div class="skill-stats">위력: ${g.default_power} ${g.coin_power}</div>
+                        <div class="skill-stats">
+                        기본 위력: ${g.default_power} | 코인 위력: ${g.coin_power} (`
+                        if (g.coin_type == "indestructible") {
+                            detailsHTML += "파괴 불가 "
+                        }
+                detailsHTML += `코인: ${g.coin}개)
+                        </div>
                     </div>
                 </div>`;
         }
@@ -111,8 +121,13 @@ function openModal(data) {
                 detailsHTML += `
                     <div class="skill-box">
                         <div class="skill-header"><span>[패시브] ${p.name}</span></div>
-                        <div class="skill-type">발동 조건: ${p.resources_type}</div>
-                    </div>`;
+                        <div class="skill-type">
+                        `
+                for (let i = 0; i < p.resources.length; i++) {
+                    detailsHTML += p.resources[i].name + "x" + p.resources[i].count + " "
+                }
+                detailsHTML +=" " + p.resource_type + `<br><br>` + p.des + `</div>
+                </div>`;
             }
             
             if(data.skill.support_passive) {
@@ -125,7 +140,7 @@ function openModal(data) {
                 for (let i = 0; i < sp.resources.length; i++) {
                     detailsHTML += sp.resources[i].name + "x" + sp.resources[i].count + " "
                 }
-                detailsHTML +=`</div>
+                detailsHTML +=" " + sp.resource_type + `<br><br>` + sp.des + `</div>
                 </div>`;
             }
             detailsHTML += `</div>`;
