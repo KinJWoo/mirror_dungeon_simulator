@@ -162,12 +162,29 @@ function openModal(egoId) {
     const ego = egoData.find(e => e.id === egoId);
     if(!ego) return;
 
-    // DOM 요소에 데이터 매핑
+    // DOM 요소에 기본 데이터 매핑
     document.getElementById('modal-img').src = ego.img;
     document.getElementById('modal-title').innerText = `${ego.sinner} - ${ego.name}`;
     document.getElementById('modal-grade').innerText = ego.grade;
     document.getElementById('modal-keywords').innerText = ego.keywords.join(', ');
-    document.getElementById('modal-desc').innerText = ego.desc;
+
+    // --- JSON 구조 변경에 따른 데이터 파싱 및 재조합 로직 ---
+    
+    // 1. 소모 자원(crime) 파싱 (예: "나태x3, 분노x1")
+    const crimeText = Object.entries(ego.crime)
+        .map(([key, value]) => `${key}x${value}`)
+        .join(', ');
+
+    // 2. 패시브 이름 처리 (이름이 없는 빈 문자열인 경우 예외 처리)
+    const passiveName = ego.passive.name ? `(${ego.passive.name})` : '';
+
+    // 3. 최종 출력 문자열 포매팅
+    const formattedDesc = `소모 자원: ${crimeText}\n정신력 소모: ${ego.sanity}\n패시브${passiveName} : \n${ego.passive.description}`;
+
+    // 재조합된 문자열을 모달 설명란에 삽입
+    document.getElementById('modal-desc').innerText = formattedDesc;
+    
+    // -----------------------------------------------------------
 
     // 모달 CSS 상태 변경을 통한 노출
     document.getElementById('ego-modal').classList.add('active');
