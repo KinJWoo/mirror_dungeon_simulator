@@ -190,6 +190,24 @@ searchInput.addEventListener('input', (event) => {
     filterUpdate()
 });
 
+function identity_eng2kor(name) {
+    switch (name) {
+        case "yisang": return "이상"
+        case "faust": return "파우스트"
+        case "donquixote": return "돈키호테"
+        case "gregor": return "그레고르"
+        case "heathcliff": return "히스클리프"
+        case "honglu": return "홍루"
+        case "ishmael": return "이스마엘"
+        case "meursault": return "뫼르소"
+        case "outis": return "오티스"
+        case "rodya": return "로쟈"
+        case "ryoshu": return "료슈"
+        case "sinclair": return "싱클레어"
+        default: return ""
+    }   
+}
+
 identityGrid.addEventListener('click', (event) => {
     let target;
     if(event.target.id != "identity-serach-grid") {
@@ -200,9 +218,13 @@ identityGrid.addEventListener('click', (event) => {
         }
         if (target.className == "identity-serach-button-selected") {
             target.className = "identity-serach-button";
+            const idx = selected_sinner.indexOf(identity_eng2kor(target.id))
+            if (idx > -1) selected_sinner.splice(idx, 1)
         } else {
             target.className = "identity-serach-button-selected";
+            selected_sinner.push(identity_eng2kor(target.id))
         }
+        filterUpdate()
     }
 });
 
