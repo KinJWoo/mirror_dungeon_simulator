@@ -3,23 +3,15 @@ import { IdentityManager } from '../simulator/IdentityManager.js';
 const manager = new IdentityManager();
 
 // --- 전역 상태 변수 ---
-let egoData = [], eventData = [];
+let egoData = [], eventData = [], themeData = [];
 let currentEgoSinner = null, currentGrade = null, currentKeyword = "";
-let currentEventSearch = ""; // 새로 추가된 전역 변수
+let currentEventSearch = "";
+let currentDifficulty = "NORMAL", currentThemeId = null;
 
-// 1. [최상단 정의] 다른 함수들보다 먼저 정의하여 스코프 문제 방지
-function renderGifts(gifts) {
-    const giftDisplay = document.getElementById('event-gift-display');
-    if (!giftDisplay) return;
-    giftDisplay.innerHTML = gifts?.length ? gifts.map(g => `
-        <div class="gift-item">
-            <img src="${g.img}" onerror="this.src='https://via.placeholder.com/60x60?text=Gift'">
-            <span class="gift-name">${g.name}</span>
-        </div>
-    `).join('') : '<p style="color:#aaa; font-size:12px; padding:10px;">획득 기프트 없음</p>';
-}
 
-// 2. [함수 선언부] 호이스팅 방지를 위해 상단 배치
+// ==========================================
+// [공통 및 EGO 함수]
+// ==========================================
 function setupTabs() {
     const buttons = document.querySelectorAll('.tab-btn');
     const panels = document.querySelectorAll('.view-panel');
@@ -28,8 +20,7 @@ function setupTabs() {
             buttons.forEach(b => b.classList.remove('active'));
             panels.forEach(p => p.classList.remove('active'));
             e.target.classList.add('active');
-            const targetId = e.target.getAttribute('data-target');
-            document.getElementById(targetId).classList.add('active');
+            document.getElementById(e.target.dataset.target).classList.add('active');
         });
     });
 }
@@ -80,17 +71,6 @@ function setupFilters() {
     }
 }
 
-function setupEventSearch() {
-    // 수정됨: 'event-search-input' -> 'event-search'
-    const searchInput = document.getElementById('event-search'); 
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            currentEventSearch = e.target.value.toLowerCase();
-            renderEventList(); 
-        });
-    }
-}
-
 function renderFilteredEgos() {
     const listDiv = document.getElementById('ego-list');
     if (!listDiv) return;
@@ -130,26 +110,40 @@ function openModal(egoId) {
     
     const crimeText = Object.entries(ego.crime).map(([key, value]) => `${key}x${value}`).join(', ');
     const passiveName = ego.passive.name ? `(${ego.passive.name})` : '';
-    const formattedDesc = `소모 자원: ${crimeText}\n정신력 소모: ${ego.sanity}\n패시브${passiveName} : \n${ego.passive.description}`;
-    
-    document.getElementById('modal-desc').innerText = formattedDesc;
+    document.getElementById('modal-desc').innerText = `소모 자원: ${crimeText}\n정신력 소모: ${ego.sanity}\n패시브${passiveName} : \n${ego.passive.description}`;
     document.getElementById('ego-modal').classList.add('active');
+}
+
+// ==========================================
+// [이벤트 관련 함수]
+// ==========================================
+function renderGifts(gifts) {
+    const giftDisplay = document.getElementById('event-gift-display');
+    if (!giftDisplay) return;
+    giftDisplay.innerHTML = gifts?.length ? gifts.map(g => `
+        <div class="gift-item">
+            <img src="${g.img}" onerror="this.src='https://via.placeholder.com/60x60?text=Gift'">
+            <span class="gift-name">${g.name}</span>
+        </div>
+    `).join('') : '<p style="color:#aaa; font-size:12px; padding:10px;">획득 기프트 없음</p>';
+}
+
+function setupEventSearch() {
+    const searchInput = document.getElementById('event-search'); // 수정된 ID
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            currentEventSearch = e.target.value.toLowerCase();
+            renderEventList(); 
+        });
+    }
 }
 
 function renderEventList() {
     const listDiv = document.getElementById('event-list');
     if (!listDiv) return;
 
-    // 1. 검색창의 현재 입력값을 가져옵니다. (HTML ID에 맞게 수정 필요)
-    const searchInput = document.getElementById('event-search');
-    const keyword = searchInput ? searchInput.value.toLowerCase() : "";
+    const filteredEvents = eventData.filter(ev => ev.title.toLowerCase().includes(currentEventSearch));
 
-    // 2. 검색어에 맞춰 데이터 필터링을 진행합니다.
-    const filteredEvents = eventData.filter(ev => 
-        ev.title.toLowerCase().includes(keyword)
-    );
-
-    // 3. 전체 데이터(eventData)가 아닌 필터링된 데이터(filteredEvents)로 리스트를 렌더링합니다.
     listDiv.innerHTML = filteredEvents.map(ev => 
         `<li class="event-list-item" data-id="${ev.eventId}">${ev.title}</li>`
     ).join('');
@@ -159,7 +153,6 @@ function renderEventList() {
             document.querySelectorAll('.event-list-item').forEach(el => el.classList.remove('active'));
             e.target.classList.add('active');
             
-            // 4. 상세 정보를 띄울 때는 원본 데이터(eventData)에서 고유 ID로 검색합니다.
             const ev = eventData.find(d => d.eventId === e.target.dataset.id);
             if (ev) {
                 document.getElementById('event-title-display').innerText = ev.title + " - 기프트";
@@ -206,24 +199,103 @@ function renderEventNode(node) {
     });
 }
 
-// 3. [초기화 실행]
+// ==========================================
+// [신규: 테마팩 관련 함수]
+// ==========================================
+function setupThemeTabs() {
+    const diffBtns = document.querySelectorAll('.diff-btn');
+    diffBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            diffBtns.forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            
+            currentDifficulty = e.target.dataset.diff;
+            currentThemeId = null; 
+            updateThemeDetail(null);
+            renderThemeList();
+        });
+    });
+}
+
+function renderThemeList() {
+    const listDiv = document.getElementById('theme-pack-list');
+    if (!listDiv) return;
+
+    const filteredThemes = themeData.filter(theme => theme.difficulty.includes(currentDifficulty));
+
+    if (filteredThemes.length === 0) {
+        listDiv.innerHTML = `<p style="color:#aaa; grid-column: 1/-1;">해당 난이도에 설정된 테마팩이 없습니다.</p>`;
+        return;
+    }
+
+    listDiv.innerHTML = filteredThemes.map(theme => `
+        <div class="theme-card ${currentThemeId === theme.id ? 'active' : ''}" data-id="${theme.id}">
+            <img src="${theme.img}" alt="${theme.name}">
+            <span class="theme-name">${theme.name}</span>
+        </div>
+    `).join('');
+
+    document.querySelectorAll('.theme-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+            document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+            
+            currentThemeId = e.currentTarget.dataset.id;
+            const selectedTheme = themeData.find(t => t.id === currentThemeId);
+            updateThemeDetail(selectedTheme);
+        });
+    });
+}
+
+function updateThemeDetail(theme) {
+    const floorDiv = document.getElementById('theme-floor-display');
+    const giftDiv = document.getElementById('theme-gift-display');
+
+    if (!theme) {
+        floorDiv.innerText = "-";
+        giftDiv.innerHTML = `<span style="color:#666; font-size:12px;">선택된 테마가 없습니다.</span>`;
+        return;
+    }
+
+    floorDiv.innerText = theme.floor || "-";
+    
+    if (theme.gifts && theme.gifts.length > 0) {
+        giftDiv.innerHTML = theme.gifts.map(gift => `
+            <div class="theme-gift-item" title="${gift.name}">
+                <img src="${gift.img}" alt="${gift.name}" onerror="this.src='https://via.placeholder.com/40/000/e5b044?text=?">
+            </div>
+        `).join('');
+    } else {
+        giftDiv.innerHTML = `<span style="color:#aaa; font-size:12px;">고유 기프트 없음</span>`;
+    }
+}
+
+// ==========================================
+// [초기화 실행]
+// ==========================================
 async function init() {
     try {
-        const [res, egoRes, eventRes] = await Promise.all([
+        const [res, egoRes, eventRes, themeRes] = await Promise.all([
             fetch('../simulator/data.json').catch(() => ({ json: () => [] })),
             fetch('./ego_data.json').catch(() => ({ json: () => [] })),
-            fetch('./Event_Option.json').catch(() => ({ json: () => [] }))
+            fetch('./Event_Option.json').catch(() => ({ json: () => [] })),
+            fetch('./Theme_Pack.json').catch(() => ({ json: () => [] })) // <- 새로 추가된 줄
         ]);
         manager.all = await res.json();
         egoData = await egoRes.json();
         eventData = await eventRes.json();
+        themeData = await themeRes.json(); // 추후 fetch('./Theme_Pack.json') 으로 교체 가능
 
         setupTabs();
         renderSinnerIcons();
         setupFilters();
-        setupEventSearch(); // 새로 추가
+        setupEventSearch();
         renderFilteredEgos();
         renderEventList();
+
+        setupThemeTabs();
+        renderThemeList();
+        updateThemeDetail(null);
 
         document.getElementById('modal-close').addEventListener('click', () => {
             document.getElementById('ego-modal').classList.remove('active');
