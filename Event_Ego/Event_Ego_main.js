@@ -5,6 +5,7 @@ const manager = new IdentityManager();
 // --- 전역 상태 변수 ---
 let egoData = [], eventData = [];
 let currentEgoSinner = null, currentGrade = null, currentKeyword = "";
+let currentEventSearch = ""; // 새로 추가된 전역 변수
 
 // 1. [최상단 정의] 다른 함수들보다 먼저 정의하여 스코프 문제 방지
 function renderGifts(gifts) {
@@ -79,6 +80,17 @@ function setupFilters() {
     }
 }
 
+function setupEventSearch() {
+    // 수정됨: 'event-search-input' -> 'event-search'
+    const searchInput = document.getElementById('event-search'); 
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            currentEventSearch = e.target.value.toLowerCase();
+            renderEventList(); 
+        });
+    }
+}
+
 function renderFilteredEgos() {
     const listDiv = document.getElementById('ego-list');
     if (!listDiv) return;
@@ -127,12 +139,27 @@ function openModal(egoId) {
 function renderEventList() {
     const listDiv = document.getElementById('event-list');
     if (!listDiv) return;
-    listDiv.innerHTML = eventData.map(ev => `<li class="event-list-item" data-id="${ev.eventId}">${ev.title}</li>`).join('');
+
+    // 1. 검색창의 현재 입력값을 가져옵니다. (HTML ID에 맞게 수정 필요)
+    const searchInput = document.getElementById('event-search');
+    const keyword = searchInput ? searchInput.value.toLowerCase() : "";
+
+    // 2. 검색어에 맞춰 데이터 필터링을 진행합니다.
+    const filteredEvents = eventData.filter(ev => 
+        ev.title.toLowerCase().includes(keyword)
+    );
+
+    // 3. 전체 데이터(eventData)가 아닌 필터링된 데이터(filteredEvents)로 리스트를 렌더링합니다.
+    listDiv.innerHTML = filteredEvents.map(ev => 
+        `<li class="event-list-item" data-id="${ev.eventId}">${ev.title}</li>`
+    ).join('');
     
     document.querySelectorAll('.event-list-item').forEach(li => {
         li.addEventListener('click', (e) => {
             document.querySelectorAll('.event-list-item').forEach(el => el.classList.remove('active'));
             e.target.classList.add('active');
+            
+            // 4. 상세 정보를 띄울 때는 원본 데이터(eventData)에서 고유 ID로 검색합니다.
             const ev = eventData.find(d => d.eventId === e.target.dataset.id);
             if (ev) {
                 document.getElementById('event-title-display').innerText = ev.title + " - 기프트";
@@ -194,6 +221,7 @@ async function init() {
         setupTabs();
         renderSinnerIcons();
         setupFilters();
+        setupEventSearch(); // 새로 추가
         renderFilteredEgos();
         renderEventList();
 
