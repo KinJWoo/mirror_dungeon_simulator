@@ -9,7 +9,7 @@ const categories = [
   { name: "참격", file: "slash.json" },
   { name: "관통", file: "pierce.json" },
   { name: "타격", file: "blunt.json" },
-  { name: "범용", file: "common.json" }
+  { name: "범용", file: "nokeyword.json" }
 ];
 
 let currentCategory = categories[0];
