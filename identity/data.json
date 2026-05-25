@@ -1402,7 +1402,11 @@
         "id": 15,
         "sinner": "이상",
         "name": "거미집 검지 아비 이상",
-        "affiliation": "검지",
+        "affiliation": [
+            "검지",
+            "거미집"
+        ],
+        
         "keywords": [
             "화상",
             "침잠",
